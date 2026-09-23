@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Durban Harbour Watch</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#071B2B; --panel:#0F2B40; --panel-2:#123249;
+    --line:#1D4258; --text:#EAF2F1; --muted:#8FAAB8; --accent:#F2994A; --teal:#2FA6A0;
+    --danger:#E0654A;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:'IBM Plex Sans',sans-serif;}
+  body{min-height:100vh;}
+  h1,h2,h3{font-family:'Space Grotesk',sans-serif;margin:0;}
+  .mono{font-family:'IBM Plex Mono',monospace;}
+
+  /* ---------- hero ---------- */
+  .hero{position:relative;overflow:hidden;padding:28px 20px 20px;border-bottom:1px solid var(--line);}
+  .hero-top{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;position:relative;z-index:2;}
+  .hero h1{font-size:clamp(24px,4vw,34px);letter-spacing:-0.02em;}
+  .hero p.tag{color:var(--muted);margin:6px 0 0;font-size:14px;max-width:46ch;}
+  .status{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);}
+  .dot{width:8px;height:8px;border-radius:50%;background:var(--danger);}
+  .dot.live{background:var(--teal);box-shadow:0 0 0 0 rgba(47,166,160,.6);animation:pulse 2s infinite;}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(47,166,160,.55);}70%{box-shadow:0 0 0 8px rgba(47,166,160,0);}100%{box-shadow:0 0 0 0 rgba(47,166,160,0);}}
+  .waves{position:absolute;left:0;right:0;bottom:-2px;height:60px;z-index:1;opacity:.5;}
+  .waves path{fill:var(--teal);}
+  .wave1{animation:drift 14s linear infinite;}
+  .wave2{animation:drift 22s linear infinite reverse;opacity:.6;}
+  @keyframes drift{from{transform:translateX(0);}to{transform:translateX(-400px);}}
+
+  /* ---------- setup panel ---------- */
+  .setup{max-width:640px;margin:18px auto;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:20px 22px;}
+  .setup h3{font-size:16px;margin-bottom:8px;}
+  .setup p{color:var(--muted);font-size:13.5px;line-height:1.6;margin:6px 0;}
+  .setup ol{color:var(--muted);font-size:13.5px;line-height:1.7;margin:10px 0;padding-left:20px;}
+  .setup a{color:var(--accent);}
+  .key-row{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;}
+  input[type="text"],input[type="password"]{flex:1;min-width:220px;background:var(--panel-2);border:1px solid var(--line);color:var(--text);padding:10px 12px;border-radius:6px;font-family:'IBM Plex Mono',monospace;font-size:13px;}
+  button{background:var(--accent);color:#1a1005;border:none;padding:10px 18px;border-radius:6px;font-weight:600;cursor:pointer;font-size:13.5px;font-family:'IBM Plex Sans',sans-serif;}
+  button.ghost{background:transparent;border:1px solid var(--line);color:var(--muted);}
+  button:hover{filter:brightness(1.08);}
+  .err{color:var(--danger);font-size:13px;margin-top:8px;}
+
+  /* ---------- layout ---------- */
+  .wrap{display:grid;grid-template-columns:minmax(260px,380px) 1fr;gap:18px;padding:20px;max-width:1200px;margin:0 auto;}
+  @media(max-width:860px){.wrap{grid-template-columns:1fr;}}
+
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden;}
+  .panel-head{padding:14px 16px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;}
+  .panel-head h2{font-size:15px;}
+  .panel-head span{color:var(--muted);font-size:12px;}
+
+  /* radar */
+  #radar-wrap{padding:10px;}
+  svg#radar{width:100%;height:auto;display:block;}
+  .radar-ring{fill:none;stroke:var(--line);stroke-width:1;}
+  .radar-port{fill:var(--accent);}
+  .ship-dot{fill:var(--teal);cursor:pointer;transition:cx .8s linear, cy .8s linear;}
+  .ship-dot.selected{fill:var(--accent);}
+  .radar-label{fill:var(--muted);font-size:6px;font-family:'IBM Plex Mono',monospace;}
+
+  /* list */
+  #list{max-height:640px;overflow-y:auto;}
+  .vcard{padding:14px 16px;border-bottom:1px solid var(--line);cursor:pointer;transition:background .15s;}
+  .vcard:hover,.vcard.selected{background:var(--panel-2);}
+  .vcard-top{display:flex;justify-content:space-between;align-items:baseline;gap:10px;}
+  .vname{font-weight:600;font-size:14.5px;}
+  .vtype{color:var(--muted);font-size:11.5px;}
+  .vmeta{display:flex;gap:14px;margin-top:6px;font-size:12px;color:var(--muted);flex-wrap:wrap;}
+  .vmeta b{color:var(--text);font-weight:500;}
+  .badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:10.5px;font-family:'IBM Plex Mono',monospace;}
+  .badge.in{background:rgba(47,166,160,.18);color:var(--teal);}
+  .badge.out{background:rgba(242,153,74,.18);color:var(--accent);}
+  .badge.still{background:rgba(143,170,184,.15);color:var(--muted);}
+
+  .facts{margin-top:10px;padding-top:10px;border-top:1px dashed var(--line);display:none;}
+  .vcard.selected .facts{display:block;}
+  .facts ul{margin:0;padding-left:18px;}
+  .facts li{font-size:13px;line-height:1.6;margin-bottom:4px;color:#D9E6E4;}
+
+  .ship-icon{display:inline-block;width:14px;height:14px;vertical-align:middle;margin-right:6px;}
+  .empty{padding:40px 20px;text-align:center;color:var(--muted);font-size:13.5px;}
+  .empty .big{font-size:30px;display:block;margin-bottom:10px;animation:bob 3s ease-in-out infinite;}
+  @keyframes bob{0%,100%{transform:translateY(0);}50%{transform:translateY(-6px);}}
+
+  footer{text-align:center;color:var(--muted);font-size:12px;padding:24px;}
+  footer a{color:var(--muted);}
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="hero-top">
+    <div>
+      <h1>Durban Harbour Watch</h1>
+      <p class="tag">Live ship movements around the Bluff and harbour mouth, straight from marine AIS radio — with the story behind every vessel on the water.</p>
+    </div>
+    <div class="status" id="statusRow"><span class="dot" id="statusDot"></span><span id="statusText">Not connected</span></div>
+  </div>
+  <svg class="waves" viewBox="0 0 800 60" preserveAspectRatio="none">
+    <path class="wave1" d="M0,30 C100,10 200,50 300,30 C400,10 500,50 600,30 C700,10 800,50 900,30 C1000,10 1100,50 1200,30 L1200,60 L0,60 Z"/>
+    <path class="wave2" d="M0,40 C150,20 250,55 400,35 C550,15 650,55 800,35 C950,15 1050,55 1200,35 L1200,60 L0,60 Z"/>
+  </svg>
+</div>
+
+<div class="setup" id="setupPanel">
+  <h3>Get this live</h3>
+  <p>This page listens to the free public AIS ship-tracking feed at <a href="https://aisstream.io" target="_blank">aisstream.io</a> — no server, no backend, just your browser talking straight to their feed.</p>
+  <ol>
+    <li>Create a free account at aisstream.io and copy your API key.</li>
+    <li>Paste it below. It's saved only in this browser (localStorage) and sent only to aisstream.io — never anywhere else.</li>
+    <li>To host this yourself: put this single file in a GitHub repo as <span class="mono">index.html</span>, then enable it under Settings → Pages.</li>
+  </ol>
+  <div class="key-row">
+    <input type="password" id="apiKeyInput" placeholder="Paste your aisstream.io API key">
+    <button id="connectBtn">Connect</button>
+    <button class="ghost" id="forgetBtn">Forget key</button>
+  </div>
+  <div class="err" id="errBox" style="display:none;"></div>
+</div>
+
+<div class="wrap">
+  <div class="panel">
+    <div class="panel-head"><h2>Radar</h2><span id="radarCount">0 vessels</span></div>
+    <div id="radar-wrap">
+      <svg id="radar" viewBox="0 0 200 200"></svg>
+    </div>
+  </div>
+  <div class="panel">
+    <div class="panel-head"><h2>Vessels near Durban</h2><span id="listCount">0 tracked</span></div>
+    <div id="list">
+      <div class="empty"><span class="big">⚓</span>Waiting for ships to check in…</div>
+    </div>
+  </div>
+</div>
+
+<footer>Positions are broadcast by the ships themselves over AIS radio, relayed by aisstream.io. Data may lag a few minutes and some vessels don't broadcast within range.</footer>
+
+<script>
+(function(){
+  "use strict";
+
+  // ---- Durban harbour geography ----
+  const PORT = { lat: -29.8767, lon: 31.0453 }; // harbour mouth
+  const BBOX = [[-30.15, 30.75], [-29.65, 31.30]]; // covers harbour + outer anchorage
+
+  const els = {
+    statusDot: document.getElementById('statusDot'),
+    statusText: document.getElementById('statusText'),
+    setupPanel: document.getElementById('setupPanel'),
+    apiKeyInput: document.getElementById('apiKeyInput'),
+    connectBtn: document.getElementById('connectBtn'),
+    forgetBtn: document.getElementById('forgetBtn'),
+    errBox: document.getElementById('errBox'),
+    list: document.getElementById('list'),
+    listCount: document.getElementById('listCount'),
+    radar: document.getElementById('radar'),
+    radarCount: document.getElementById('radarCount'),
+  };
+
+  let ws = null;
+  let selectedMmsi = null;
+  const vessels = new Map(); // mmsi -> record
+
+  // ---- reference tables ----
+  const SHIP_TYPES = [
+    [20,29,"Wing-in-ground craft"],[30,30,"Fishing vessel"],[31,32,"Towing vessel"],
+    [33,33,"Dredger"],[34,34,"Diving support vessel"],[35,35,"Military vessel"],
+    [36,36,"Sailing vessel"],[37,37,"Pleasure craft"],[40,49,"High-speed craft"],
+    [50,50,"Pilot vessel"],[51,51,"Search & rescue vessel"],[52,52,"Tug"],
+    [53,53,"Port tender"],[55,55,"Law enforcement vessel"],[58,58,"Medical vessel"],
+    [60,69,"Passenger ship"],[70,79,"Cargo ship"],[80,89,"Tanker"],[90,99,"Other vessel"]
+  ];
+  function shipType(code){
+    if(code==null) return "Vessel of unknown type";
+    for(const [lo,hi,label] of SHIP_TYPES) if(code>=lo&&code<=hi) return label;
+    return "Vessel of unknown type";
+  }
+  const NAV_STATUS = ["Under way using engine","At anchor","Not under command","Restricted manoeuvrability",
+    "Constrained by draught","Moored","Aground","Engaged in fishing","Under way sailing",
+    "Reserved (HSC)","Reserved (WIG)","Power-driven vessel towing astern","Power-driven vessel pushing ahead",
+    "Reserved","AIS-SART active","Not defined"];
+
+  // MID (first 3 digits of MMSI) -> flag state, common merchant registries + SA
+  const MID = {
+    "601":"South Africa","775":"Namibia","668":"Mozambique",
+    "351":"Panama","352":"Panama","353":"Panama","354":"Panama","355":"Panama","356":"Panama","357":"Panama","370":"Panama","371":"Panama","372":"Panama","373":"Panama","374":"Panama",
+    "636":"Liberia","637":"Liberia",
+    "538":"Marshall Islands",
+    "215":"Malta","248":"Malta","256":"Malta",
+    "229":"Malta","209":"Cyprus","210":"Cyprus","212":"Cyprus",
+    "563":"Singapore","564":"Singapore","565":"Singapore","566":"Singapore",
+    "412":"China","413":"China","414":"China","477":"Hong Kong",
+    "237":"Greece","239":"Greece","240":"Greece","241":"Greece",
+    "308":"Bahamas","309":"Bahamas","311":"Bahamas",
+    "232":"United Kingdom","233":"United Kingdom","234":"United Kingdom","235":"United Kingdom",
+    "244":"Netherlands","245":"Netherlands","246":"Netherlands",
+    "211":"Germany","218":"Germany",
+    "226":"France","227":"France","228":"France",
+    "247":"Italy","431":"Japan","432":"Japan","440":"South Korea","441":"South Korea",
+    "419":"India","525":"Indonesia","533":"Malaysia","548":"Philippines",
+    "477":"Hong Kong","412":"China",
+    "273":"Russia","304":"Antigua and Barbuda","305":"Antigua and Barbuda",
+    "312":"Belize","345":"Mexico","366":"United States","367":"United States","368":"United States","369":"United States",
+    "563":"Singapore","636":"Liberia","511":"Vanuatu",
+    "374":"Panama","657":"Sierra Leone","667":"Sierra Leone",
+    "339":"Jamaica","547":"French territories","250":"Ireland"
+  };
+  function flagFromMmsi(mmsi){
+    const mid = String(mmsi).slice(0,3);
+    return MID[mid] || "an unregistered or lesser-known flag state";
+  }
+
+  function haversineKm(a,b,c,d){
+    const R=6371, toRad=x=>x*Math.PI/180;
+    const dLat=toRad(c-a), dLon=toRad(d-b);
+    const s=Math.sin(dLat/2)**2 + Math.cos(toRad(a))*Math.cos(toRad(c))*Math.sin(dLon/2)**2;
+    return R*2*Math.atan2(Math.sqrt(s),Math.sqrt(1-s));
+  }
+  function bearingToPort(lat,lon){
+    const toRad=x=>x*Math.PI/180, toDeg=x=>x*180/Math.PI;
+    const y=Math.sin(toRad(PORT.lon-lon))*Math.cos(toRad(PORT.lat));
+    const x=Math.cos(toRad(lat))*Math.sin(toRad(PORT.lat)) - Math.sin(toRad(lat))*Math.cos(toRad(PORT.lat))*Math.cos(toRad(PORT.lon-lon));
+    return (toDeg(Math.atan2(y,x))+360)%360;
+  }
+  function angleDiff(a,b){ let d=Math.abs(a-b)%360; return d>180?360-d:d; }
+
+  function lengthComparison(m){
+    if(!m||m<5) return null;
+    if(m<25) return "about the length of a tennis court";
+    if(m<60) return "roughly the length of an Olympic swimming pool";
+    if(m<100) return "close to the length of a rugby field";
+    if(m<200) return "longer than two rugby fields laid end to end";
+    if(m<300) return "close to the length of three football pitches";
+    return "among the largest ships afloat — longer than the Moses Mabhida Stadium is wide";
+  }
+
+  function buildFacts(v){
+    const facts = [];
+    facts.push(`Sailing under the flag of ${flagFromMmsi(v.mmsi)}.`);
+    facts.push(`Classed as a ${shipType(v.type).toLowerCase()}${v.type>=70&&v.type<=89?" — likely moving bulk cargo, containers, or fuel in and out of the port":""}.`);
+    if(v.length){
+      const cmp = lengthComparison(v.length);
+      facts.push(`About ${Math.round(v.length)} m long${cmp?", "+cmp:""}.`);
+    }
+    if(v.sog!=null && v.sog > 0.3){
+      const dist = haversineKm(v.lat,v.lon,PORT.lat,PORT.lon);
+      let dir = "moving through the area";
+      if(v.cog!=null){
+        const brg = bearingToPort(v.lat,v.lon);
+        const diff = angleDiff(v.cog,brg);
+        dir = diff < 45 ? "heading in toward the harbour mouth" : (diff > 135 ? "heading back out to open sea" : "moving along the coast, not straight for the harbour");
+      }
+      facts.push(`Making ${v.sog.toFixed(1)} knots, ${dir}, about ${dist.toFixed(1)} km from the harbour mouth.`);
+    } else if (v.navStatus===1 || v.navStatus===5){
+      facts.push(v.navStatus===1 ? "Currently at anchor, likely waiting for a berth to open up." : "Currently moored, probably alongside in the harbour.");
+    }
+    if(v.destination) facts.push(`Broadcasting its destination as "${v.destination.trim()}".`);
+    if(v.imo) facts.push(`IMO number ${v.imo} — a permanent ID that stays with the hull for its entire life, even if it's renamed or resold.`);
+    return facts;
+  }
+
+  function movementBadge(v){
+    if(v.sog==null || v.sog < 0.3) return {cls:"still", label:"stationary"};
+    if(v.cog!=null){
+      const brg = bearingToPort(v.lat,v.lon);
+      const diff = angleDiff(v.cog,brg);
+      if(diff<45) return {cls:"in", label:"inbound"};
+      if(diff>135) return {cls:"out", label:"outbound"};
+    }
+    return {cls:"still", label:"under way"};
+  }
+
+  // ---- rendering ----
+  function render(){
+    const arr = Array.from(vessels.values());
+    arr.sort((a,b)=> haversineKm(a.lat,a.lon,PORT.lat,PORT.lon) - haversineKm(b.lat,b.lon,PORT.lat,PORT.lon));
+    els.listCount.textContent = arr.length + " tracked";
+    els.radarCount.textContent = arr.length + " vessels";
+
+    if(arr.length===0){
+      els.list.innerHTML = '<div class="empty"><span class="big">⚓</span>Waiting for ships to check in…</div>';
+    } else {
+      els.list.innerHTML = arr.map(v=>{
+        const name = v.name || ("MMSI " + v.mmsi);
+        const badge = movementBadge(v);
+        const dist = haversineKm(v.lat,v.lon,PORT.lat,PORT.lon).toFixed(1);
+        const sel = v.mmsi===selectedMmsi;
+        const factsHtml = sel ? ('<div class="facts"><ul>'+buildFacts(v).map(f=>'<li>'+f+'</li>').join('')+'</ul></div>') : '';
+        return `<div class="vcard ${sel?'selected':''}" data-mmsi="${v.mmsi}">
+          <div class="vcard-top">
+            <div class="vname">${shipGlyph(v)} ${escapeHtml(name)}</div>
+            <span class="badge ${badge.cls}">${badge.label}</span>
+          </div>
+          <div class="vtype">${shipType(v.type)}</div>
+          <div class="vmeta">
+            <span><b>${dist} km</b> from harbour</span>
+            <span><b>${v.sog!=null?v.sog.toFixed(1):"–"}</b> kn</span>
+            <span class="mono">MMSI ${v.mmsi}</span>
+          </div>
+          ${factsHtml}
+        </div>`;
+      }).join('');
+    }
+    drawRadar(arr);
+  }
+
+  function shipGlyph(v){
+    const rot = v.cog!=null ? Math.round(v.cog) : 0;
+    return `<span class="ship-icon" style="transform:rotate(${rot}deg)">▲</span>`;
+  }
+  function escapeHtml(s){ const d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
+
+  function project(lat,lon){
+    const [[latMin,lonMin],[latMax,lonMax]] = BBOX;
+    const x = (lon-lonMin)/(lonMax-lonMin)*180 + 10;
+    const y = (1-(lat-latMin)/(latMax-latMin))*180 + 10;
+    return [x,y];
+  }
+  function drawRadar(arr){
+    const [px,py] = project(PORT.lat,PORT.lon);
+    let svg = `<circle class="radar-ring" cx="100" cy="100" r="90"/><circle class="radar-ring" cx="100" cy="100" r="55"/><circle class="radar-ring" cx="100" cy="100" r="20"/>`;
+    svg += `<circle class="radar-port" cx="${px}" cy="${py}" r="3"/><text class="radar-label" x="${px+5}" y="${py+3}">Durban</text>`;
+    arr.forEach(v=>{
+      const [x,y] = project(v.lat,v.lon);
+      const cx = Math.max(4,Math.min(196,x)), cy = Math.max(4,Math.min(196,y));
+      svg += `<circle class="ship-dot ${v.mmsi===selectedMmsi?'selected':''}" data-mmsi="${v.mmsi}" cx="${cx}" cy="${cy}" r="3"/>`;
+    });
+    els.radar.innerHTML = svg;
+  }
+
+  els.list.addEventListener('click', e=>{
+    const card = e.target.closest('.vcard');
+    if(card) select(card.dataset.mmsi);
+  });
+  els.radar.addEventListener('click', e=>{
+    if(e.target.classList.contains('ship-dot')) select(e.target.dataset.mmsi);
+  });
+  function select(mmsi){
+    selectedMmsi = (selectedMmsi===mmsi) ? null : mmsi;
+    render();
+  }
+
+  // ---- websocket ----
+  function setStatus(text, live){
+    els.statusText.textContent = text;
+    els.statusDot.className = 'dot' + (live?' live':'');
+  }
+
+  function connect(apiKey){
+    setStatus('Connecting…', false);
+    els.errBox.style.display='none';
+    try{ ws = new WebSocket('wss://stream.aisstream.io/v0/stream'); }
+    catch(e){ showErr('Could not open a connection: '+e.message); return; }
+
+    ws.onopen = () => {
+      ws.send(JSON.stringify({
+        APIKey: apiKey,
+        BoundingBoxes: [[[BBOX[0][0],BBOX[0][1]],[BBOX[1][0],BBOX[1][1]]]],
+        FilterMessageTypes: ["PositionReport","ShipStaticData"]
+      }));
+      setStatus('Live — listening for ships near Durban', true);
+      els.setupPanel.style.display='none';
+    };
+    ws.onmessage = (evt) => {
+      let msg; try{ msg = JSON.parse(evt.data); } catch(e){ return; }
+      const mmsi = msg?.MetaData?.MMSI;
+      if(!mmsi) return;
+      const rec = vessels.get(mmsi) || { mmsi };
+      rec.name = msg.MetaData.ShipName ? msg.MetaData.ShipName.trim() : rec.name;
+      rec.lat = msg.MetaData.latitude ?? rec.lat;
+      rec.lon = msg.MetaData.longitude ?? rec.lon;
+      rec.lastUpdate = Date.now();
+
+      if(msg.MessageType === "PositionReport"){
+        const p = msg.Message.PositionReport;
+        rec.sog = p.Sog; rec.cog = p.Cog; rec.navStatus = p.NavigationalStatus;
+        rec.lat = p.Latitude; rec.lon = p.Longitude;
+      } else if (msg.MessageType === "ShipStaticData"){
+        const s = msg.Message.ShipStaticData;
+        rec.type = s.Type;
+        rec.imo = s.ImoNumber;
+        rec.destination = s.Destination;
+        if(s.Dimension) rec.length = (s.Dimension.A||0)+(s.Dimension.B||0);
+      }
+      if(rec.lat!=null && rec.lon!=null) vessels.set(mmsi, rec);
+      throttledRender();
+    };
+    ws.onerror = () => { showErr('Connection error — check your API key and try again.'); };
+    ws.onclose = () => {
+      setStatus('Disconnected — retrying…', false);
+      setTimeout(()=>{ if(getKey()) connect(getKey()); }, 5000);
+    };
+  }
+
+  let renderTimer=null;
+  function throttledRender(){ if(renderTimer) return; renderTimer=setTimeout(()=>{render(); renderTimer=null;}, 1000); }
+
+  function showErr(msg){ els.errBox.textContent = msg; els.errBox.style.display='block'; setStatus('Not connected', false); }
+
+  function getKey(){ return localStorage.getItem('aisstream_key') || ''; }
+  function setKey(k){ localStorage.setItem('aisstream_key', k); }
+
+  els.connectBtn.addEventListener('click', ()=>{
+    const key = els.apiKeyInput.value.trim();
+    if(!key){ showErr('Paste your aisstream.io API key first.'); return; }
+    setKey(key);
+    connect(key);
+  });
+  els.forgetBtn.addEventListener('click', ()=>{
+    localStorage.removeItem('aisstream_key');
+    els.apiKeyInput.value='';
+    if(ws) ws.close();
+    vessels.clear(); render();
+    els.setupPanel.style.display='block';
+    setStatus('Not connected', false);
+  });
+
+  // prune stale vessels every couple of minutes (AIS gaps happen)
+  setInterval(()=>{
+    const cutoff = Date.now() - 30*60*1000;
+    let changed=false;
+    for(const [mmsi,v] of vessels){ if(v.lastUpdate < cutoff){ vessels.delete(mmsi); changed=true; } }
+    if(changed) render();
+  }, 60000);
+
+  // auto-connect if key already saved
+  const saved = getKey();
+  if(saved){ els.apiKeyInput.value = saved; connect(saved); }
+  render();
+})();
+</script>
+</body>
+</html>
