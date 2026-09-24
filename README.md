@@ -15,3 +15,6 @@ npx wrangler secret put AISSTREAM_API_KEY
 
 When Wrangler prompts for the value, paste the same key from `.env`. The local
 `.env` file is ignored by Git and is not uploaded to the Worker.
+
+
+https://www.vesselfinder.com/ports/ZADUR001
