@@ -109,18 +109,14 @@
 </div>
 
 <div class="setup" id="setupPanel">
-  <h3>Get this live</h3>
-  <p>This page listens to the free public AIS ship-tracking feed at <a href="https://aisstream.io" target="_blank">aisstream.io</a> — no server, no backend, just your browser talking straight to their feed.</p>
+  <h3>One-time setup</h3>
+  <p>This page gets its live ship data from <a href="https://aisstream.io" target="_blank">aisstream.io</a> through a small free relay, so the API key never has to sit in this page or in any visitor's browser.</p>
   <ol>
-    <li>Create a free account at aisstream.io and copy your API key.</li>
-    <li>Paste it below. It's saved only in this browser (localStorage) and sent only to aisstream.io — never anywhere else.</li>
-    <li>To host this yourself: put this single file in a GitHub repo as <span class="mono">index.html</span>, then enable it under Settings → Pages.</li>
+    <li>Deploy the companion <span class="mono">worker.js</span> file to a free Cloudflare Worker (one-time, a few minutes — see the setup guide).</li>
+    <li>Copy the <span class="mono">.workers.dev</span> address you're given.</li>
+    <li>Paste it into the <span class="mono">RELAY_URL</span> constant near the top of this file's script, then re-upload to GitHub.</li>
   </ol>
-  <div class="key-row">
-    <input type="password" id="apiKeyInput" placeholder="Paste your aisstream.io API key">
-    <button id="connectBtn">Connect</button>
-    <button class="ghost" id="forgetBtn">Forget key</button>
-  </div>
+  <p>Once that's done, this page just works for anyone who opens it — including your aunt — with nothing to paste in.</p>
   <div class="err" id="errBox" style="display:none;"></div>
 </div>
 
@@ -149,13 +145,14 @@
   const PORT = { lat: -29.8767, lon: 31.0453 }; // harbour mouth
   const BBOX = [[-30.15, 30.75], [-29.65, 31.30]]; // covers harbour + outer anchorage
 
+  // Set this to your deployed Cloudflare Worker address after following the setup guide,
+  // e.g. "wss://durban-ais-relay.yourname.workers.dev"
+  const RELAY_URL = "wss://harbourwatch.nikeelramharakh.workers.dev";
+
   const els = {
     statusDot: document.getElementById('statusDot'),
     statusText: document.getElementById('statusText'),
     setupPanel: document.getElementById('setupPanel'),
-    apiKeyInput: document.getElementById('apiKeyInput'),
-    connectBtn: document.getElementById('connectBtn'),
-    forgetBtn: document.getElementById('forgetBtn'),
     errBox: document.getElementById('errBox'),
     list: document.getElementById('list'),
     listCount: document.getElementById('listCount'),
@@ -352,18 +349,17 @@
     els.statusDot.className = 'dot' + (live?' live':'');
   }
 
-  function connect(apiKey){
+  function connect(){
+    if(RELAY_URL.includes('YOUR-WORKER-NAME')){
+      showErr('Set RELAY_URL near the top of the script to your deployed Worker address — see the setup guide.');
+      return;
+    }
     setStatus('Connecting…', false);
     els.errBox.style.display='none';
-    try{ ws = new WebSocket('wss://stream.aisstream.io/v0/stream'); }
+    try{ ws = new WebSocket(RELAY_URL); }
     catch(e){ showErr('Could not open a connection: '+e.message); return; }
 
     ws.onopen = () => {
-      ws.send(JSON.stringify({
-        APIKey: apiKey,
-        BoundingBoxes: [[[BBOX[0][0],BBOX[0][1]],[BBOX[1][0],BBOX[1][1]]]],
-        FilterMessageTypes: ["PositionReport","ShipStaticData"]
-      }));
       setStatus('Live — listening for ships near Durban', true);
       els.setupPanel.style.display='none';
     };
@@ -391,10 +387,10 @@
       if(rec.lat!=null && rec.lon!=null) vessels.set(mmsi, rec);
       throttledRender();
     };
-    ws.onerror = () => { showErr('Connection error — check your API key and try again.'); };
+    ws.onerror = () => { showErr('Connection error — make sure your Worker is deployed and RELAY_URL is correct.'); };
     ws.onclose = () => {
       setStatus('Disconnected — retrying…', false);
-      setTimeout(()=>{ if(getKey()) connect(getKey()); }, 5000);
+      setTimeout(connect, 5000);
     };
   }
 
@@ -402,24 +398,6 @@
   function throttledRender(){ if(renderTimer) return; renderTimer=setTimeout(()=>{render(); renderTimer=null;}, 1000); }
 
   function showErr(msg){ els.errBox.textContent = msg; els.errBox.style.display='block'; setStatus('Not connected', false); }
-
-  function getKey(){ return localStorage.getItem('aisstream_key') || ''; }
-  function setKey(k){ localStorage.setItem('aisstream_key', k); }
-
-  els.connectBtn.addEventListener('click', ()=>{
-    const key = els.apiKeyInput.value.trim();
-    if(!key){ showErr('Paste your aisstream.io API key first.'); return; }
-    setKey(key);
-    connect(key);
-  });
-  els.forgetBtn.addEventListener('click', ()=>{
-    localStorage.removeItem('aisstream_key');
-    els.apiKeyInput.value='';
-    if(ws) ws.close();
-    vessels.clear(); render();
-    els.setupPanel.style.display='block';
-    setStatus('Not connected', false);
-  });
 
   // prune stale vessels every couple of minutes (AIS gaps happen)
   setInterval(()=>{
@@ -429,9 +407,7 @@
     if(changed) render();
   }, 60000);
 
-  // auto-connect if key already saved
-  const saved = getKey();
-  if(saved){ els.apiKeyInput.value = saved; connect(saved); }
+  connect();
   render();
 })();
 </script>
