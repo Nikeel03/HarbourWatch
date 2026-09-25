@@ -19,7 +19,7 @@
   body{min-height:100vh;}
   h1,h2,h3{font-family:'Space Grotesk',sans-serif;margin:0;}
   .mono{font-family:'IBM Plex Mono',monospace;}
- 
+
   /* ---------- hero ---------- */
   .hero{position:relative;overflow:hidden;padding:28px 20px 20px;border-bottom:1px solid var(--line);}
   .hero-top{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;position:relative;z-index:2;}
@@ -34,7 +34,7 @@
   .wave1{animation:drift 14s linear infinite;}
   .wave2{animation:drift 22s linear infinite reverse;opacity:.6;}
   @keyframes drift{from{transform:translateX(0);}to{transform:translateX(-400px);}}
- 
+
   /* ---------- setup panel ---------- */
   .setup{max-width:640px;margin:18px auto;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:20px 22px;}
   .setup h3{font-size:16px;margin-bottom:8px;}
@@ -42,18 +42,21 @@
   .setup ol{color:var(--muted);font-size:13.5px;line-height:1.7;margin:10px 0;padding-left:20px;}
   .setup a{color:var(--accent);}
   .err{color:var(--danger);font-size:13px;margin-top:8px;}
- 
+
   /* ---------- layout ---------- */
   .wrap{display:grid;grid-template-columns:1.3fr 1fr;gap:18px;padding:20px;max-width:1300px;margin:0 auto;}
   @media(max-width:900px){.wrap{grid-template-columns:1fr;}}
- 
+
   .panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden;}
   .panel-head{padding:14px 16px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;}
   .panel-head h2{font-size:15px;}
   .panel-head span{color:var(--muted);font-size:12px;}
- 
+
   /* ---------- map ---------- */
   #map{width:100%;height:560px;background:var(--panel-2);}
+  /* fake a dark map: standard OSM tiles are light, so invert + re-tint them */
+  .leaflet-tile-pane{filter:invert(92%) hue-rotate(180deg) brightness(95%) contrast(90%);}
+  .leaflet-tile-pane{filter:invert(1) hue-rotate(200deg) brightness(0.92) contrast(0.9) saturate(0.7);}
   .map-legend{display:flex;gap:16px;flex-wrap:wrap;padding:10px 14px;font-size:11px;color:var(--muted);border-top:1px solid var(--line);}
   .map-legend span{display:inline-flex;align-items:center;gap:5px;}
   .swatch{width:8px;height:8px;border-radius:50%;display:inline-block;}
@@ -61,7 +64,7 @@
   .swatch.out{background:var(--accent);}
   .swatch.still{background:var(--muted);}
   .swatch.landmark{background:var(--gold);}
- 
+
   /* leaflet theming */
   .leaflet-container{background:var(--panel-2);font-family:'IBM Plex Sans',sans-serif;}
   .leaflet-control-attribution{background:rgba(7,27,43,.75)!important;color:var(--muted)!important;font-size:10px;}
@@ -73,7 +76,7 @@
   .leaflet-popup-content b{color:var(--text);}
   .popup-facts{margin:6px 0 0;padding-left:16px;}
   .popup-facts li{margin-bottom:4px;color:#D9E6E4;}
- 
+
   .ship-marker{display:flex;align-items:center;justify-content:center;}
   .ship-marker .arrow{width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-bottom:12px solid var(--muted);filter:drop-shadow(0 0 2px rgba(0,0,0,.6));}
   .ship-marker.in .arrow{border-bottom-color:var(--teal);}
@@ -82,7 +85,7 @@
   .landmark-marker{width:10px;height:10px;border-radius:50%;background:var(--gold);border:2px solid #0F2B40;box-shadow:0 0 4px rgba(232,200,126,.7);}
   .landmark-tooltip{background:transparent!important;border:none!important;box-shadow:none!important;color:var(--gold)!important;font-family:'IBM Plex Sans',sans-serif;font-weight:600;font-size:11px;text-shadow:0 1px 3px #071B2B, 0 0 6px #071B2B;}
   .landmark-tooltip::before{display:none;}
- 
+
   /* list */
   #list{max-height:560px;overflow-y:auto;}
   .vcard{padding:14px 16px;border-bottom:1px solid var(--line);cursor:pointer;transition:background .15s;}
@@ -96,23 +99,23 @@
   .badge.in{background:rgba(47,166,160,.18);color:var(--teal);}
   .badge.out{background:rgba(242,153,74,.18);color:var(--accent);}
   .badge.still{background:rgba(143,170,184,.15);color:var(--muted);}
- 
+
   .facts{margin-top:10px;padding-top:10px;border-top:1px dashed var(--line);display:none;}
   .vcard.selected .facts{display:block;}
   .facts ul{margin:0;padding-left:18px;}
   .facts li{font-size:13px;line-height:1.6;margin-bottom:4px;color:#D9E6E4;}
- 
+
   .ship-icon{display:inline-block;width:14px;height:14px;vertical-align:middle;margin-right:6px;}
   .empty{padding:40px 20px;text-align:center;color:var(--muted);font-size:13.5px;}
   .empty .big{font-size:30px;display:block;margin-bottom:10px;animation:bob 3s ease-in-out infinite;}
   @keyframes bob{0%,100%{transform:translateY(0);}50%{transform:translateY(-6px);}}
- 
+
   footer{text-align:center;color:var(--muted);font-size:12px;padding:24px;}
   footer a{color:var(--muted);}
 </style>
 </head>
 <body>
- 
+
 <div class="hero">
   <div class="hero-top">
     <div>
@@ -126,7 +129,7 @@
     <path class="wave2" d="M0,40 C150,20 250,55 400,35 C550,15 650,55 800,35 C950,15 1050,55 1200,35 L1200,60 L0,60 Z"/>
   </svg>
 </div>
- 
+
 <div class="setup" id="setupPanel">
   <h3>One-time setup</h3>
   <p>This page gets its live ship data from <a href="https://aisstream.io" target="_blank">aisstream.io</a> through a small free relay, so the API key never has to sit in this page or in any visitor's browser.</p>
@@ -138,7 +141,7 @@
   <p>Once that's done, this page just works for anyone who opens it — including your aunt — with nothing to paste in.</p>
   <div class="err" id="errBox" style="display:none;"></div>
 </div>
- 
+
 <div class="wrap">
   <div class="panel">
     <div class="panel-head"><h2>Map</h2><span id="radarCount">0 vessels</span></div>
@@ -157,16 +160,16 @@
     </div>
   </div>
 </div>
- 
+
 <footer>Positions are broadcast by the ships themselves over AIS radio, relayed by aisstream.io. Map data © <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors, tiles by <a href="https://carto.com/attributions" target="_blank">CARTO</a>. Data may lag a few minutes and some vessels don't broadcast within range.<br>For official arrivals, departures and expected vessels, see <a href="https://www.vesselfinder.com/ports/ZADUR001" target="_blank">Port of Durban on VesselFinder</a>.</footer>
- 
+
 <script>
 (function(){
   "use strict";
- 
+
   // ---- Durban harbour geography ----
   const PORT = { lat: -29.8767, lon: 31.0453 }; // harbour mouth
- 
+
   // Real, checked landmark coordinates (not stylised)
   const LANDMARKS = [
     { name:"Moses Mabhida Stadium", lat:-29.8290, lon:31.0303 },
@@ -179,11 +182,11 @@
   const PROMENADE = [
     [-29.8695,31.0480],[-29.8616,31.0470],[-29.8517,31.0430],[-29.8420,31.0390],[-29.8344,31.0339]
   ];
- 
+
   // Set this to your deployed Cloudflare Worker address after following the setup guide,
   // e.g. "wss://durban-ais-relay.yourname.workers.dev"
-  const RELAY_URL = " wss://harbourwatch.nikeelramharakh.workers.dev";
- 
+  const RELAY_URL = "wss://harbourwatch.nikeelramharakh.workers.dev";
+
   const els = {
     statusDot: document.getElementById('statusDot'),
     statusText: document.getElementById('statusText'),
@@ -193,11 +196,11 @@
     listCount: document.getElementById('listCount'),
     radarCount: document.getElementById('radarCount'),
   };
- 
+
   let ws = null;
   let selectedMmsi = null;
   const vessels = new Map(); // mmsi -> record
- 
+
   // ---- reference tables ----
   const SHIP_TYPES = [
     [20,29,"Wing-in-ground craft"],[30,30,"Fishing vessel"],[31,32,"Towing vessel"],
@@ -212,7 +215,7 @@
     for(const [lo,hi,label] of SHIP_TYPES) if(code>=lo&&code<=hi) return label;
     return "Vessel of unknown type";
   }
- 
+
   // MID (first 3 digits of MMSI) -> flag state, common merchant registries + SA
   const MID = {
     "601":"South Africa","775":"Namibia","668":"Mozambique",
@@ -240,7 +243,7 @@
     const mid = String(mmsi).slice(0,3);
     return MID[mid] || "an unregistered or lesser-known flag state";
   }
- 
+
   function haversineKm(a,b,c,d){
     const R=6371, toRad=x=>x*Math.PI/180;
     const dLat=toRad(c-a), dLon=toRad(d-b);
@@ -254,7 +257,7 @@
     return (toDeg(Math.atan2(y,x))+360)%360;
   }
   function angleDiff(a,b){ let d=Math.abs(a-b)%360; return d>180?360-d:d; }
- 
+
   function lengthComparison(m){
     if(!m||m<5) return null;
     if(m<25) return "about the length of a tennis court";
@@ -264,7 +267,7 @@
     if(m<300) return "close to the length of three football pitches";
     return "among the largest ships afloat — longer than the Moses Mabhida Stadium is wide";
   }
- 
+
   function buildFacts(v){
     const facts = [];
     facts.push(`Sailing under the flag of ${flagFromMmsi(v.mmsi)}.`);
@@ -289,7 +292,7 @@
     if(v.imo) facts.push(`IMO number ${v.imo} — a permanent ID that stays with the hull for its entire life, even if it's renamed or resold.`);
     return facts;
   }
- 
+
   function movementBadge(v){
     if(v.sog==null || v.sog < 0.3) return {cls:"still", label:"stationary"};
     if(v.cog!=null){
@@ -300,16 +303,16 @@
     }
     return {cls:"still", label:"under way"};
   }
- 
+
   function escapeHtml(s){ const d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
- 
-  // ---- real map (Leaflet + OpenStreetMap via CARTO dark tiles) ----
+
+  // ---- real map (Leaflet + OpenStreetMap tiles, no API key required) ----
   const map = L.map('map', { zoomControl:true }).setView([PORT.lat, PORT.lon], 14);
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-    attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
-    subdomains: 'abcd', maxZoom: 19
+  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; OpenStreetMap contributors',
+    maxZoom: 19
   }).addTo(map);
- 
+
   // landmarks (fixed, drawn once)
   LANDMARKS.forEach(l=>{
     L.marker([l.lat,l.lon], {
@@ -318,9 +321,9 @@
   });
   L.polyline(PROMENADE, { color:'#E8C87E', weight:2, opacity:.6, dashArray:'6,6' }).addTo(map)
     .bindTooltip('Golden Mile promenade', { sticky:true });
- 
+
   const shipMarkers = new Map(); // mmsi -> L.marker
- 
+
   function shipIcon(badge, sel){
     return L.divIcon({
       className:'',
@@ -328,7 +331,7 @@
       iconSize:[16,16], iconAnchor:[8,8]
     });
   }
- 
+
   function renderMapMarkers(arr){
     const seen = new Set();
     arr.forEach(v=>{
@@ -357,18 +360,18 @@
       if(!seen.has(mmsi)){ map.removeLayer(m); shipMarkers.delete(mmsi); }
     }
   }
- 
+
   function focusVessel(v){
     map.flyTo([v.lat,v.lon], Math.max(map.getZoom(),15), { duration:0.6 });
   }
- 
+
   // ---- rendering ----
   function render(){
     const arr = Array.from(vessels.values());
     arr.sort((a,b)=> haversineKm(a.lat,a.lon,PORT.lat,PORT.lon) - haversineKm(b.lat,b.lon,PORT.lat,PORT.lon));
     els.listCount.textContent = arr.length + " tracked";
     els.radarCount.textContent = arr.length + " vessels";
- 
+
     if(arr.length===0){
       els.list.innerHTML = '<div class="empty"><span class="big">⚓</span>Waiting for ships to check in…</div>';
     } else {
@@ -395,14 +398,14 @@
     }
     renderMapMarkers(arr);
   }
- 
+
   function shipGlyph(v){
     const rot = v.cog!=null ? Math.round(v.cog) : 0;
     const badge = movementBadge(v);
     const color = badge.cls==='in' ? 'var(--teal)' : (badge.cls==='out' ? 'var(--accent)' : 'var(--muted)');
     return `<span class="ship-icon" style="transform:rotate(${rot}deg);color:${color}">▲</span>`;
   }
- 
+
   els.list.addEventListener('click', e=>{
     const card = e.target.closest('.vcard');
     if(card) select(card.dataset.mmsi);
@@ -412,13 +415,13 @@
     if(selectedMmsi){ const v = vessels.get(selectedMmsi); if(v) focusVessel(v); }
     render();
   }
- 
+
   // ---- websocket ----
   function setStatus(text, live){
     els.statusText.textContent = text;
     els.statusDot.className = 'dot' + (live?' live':'');
   }
- 
+
   function connect(){
     if(RELAY_URL.includes('YOUR-WORKER-NAME')){
       showErr('Set RELAY_URL near the top of the script to your deployed Worker address — see the setup guide.');
@@ -428,7 +431,7 @@
     els.errBox.style.display='none';
     try{ ws = new WebSocket(RELAY_URL); }
     catch(e){ showErr('Could not open a connection: '+e.message); return; }
- 
+
     ws.onopen = () => {
       setStatus('Live — listening for ships near Durban', true);
       els.setupPanel.style.display='none';
@@ -442,7 +445,7 @@
       rec.lat = msg.MetaData.latitude ?? rec.lat;
       rec.lon = msg.MetaData.longitude ?? rec.lon;
       rec.lastUpdate = Date.now();
- 
+
       if(msg.MessageType === "PositionReport"){
         const p = msg.Message.PositionReport;
         rec.sog = p.Sog; rec.cog = p.Cog; rec.navStatus = p.NavigationalStatus;
@@ -463,12 +466,12 @@
       setTimeout(connect, 5000);
     };
   }
- 
+
   let renderTimer=null;
   function throttledRender(){ if(renderTimer) return; renderTimer=setTimeout(()=>{render(); renderTimer=null;}, 1000); }
- 
+
   function showErr(msg){ els.errBox.textContent = msg; els.errBox.style.display='block'; setStatus('Not connected', false); }
- 
+
   // prune stale vessels every couple of minutes (AIS gaps happen)
   setInterval(()=>{
     const cutoff = Date.now() - 30*60*1000;
@@ -476,7 +479,7 @@
     for(const [mmsi,v] of vessels){ if(v.lastUpdate < cutoff){ vessels.delete(mmsi); changed=true; } }
     if(changed) render();
   }, 60000);
- 
+
   connect();
   render();
 })();
