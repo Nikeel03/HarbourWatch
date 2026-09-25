@@ -179,12 +179,13 @@
     { name:"Suncoast Casino / North Beach", lat:-29.8344, lon:31.0339 },
     { name:"Blue Lagoon", lat:-29.8100, lon:31.03556 },
   ];
-  // Golden Mile promenade line, anchored on verified points (uShaka, Suncoast,
-  // Blue Lagoon/Umgeni river mouth) rather than freehand-guessed waypoints —
+  // Golden Mile promenade line, routed through every checkpoint in order —
   // still an approximation of the walkway, not a surveyed GPS track.
-  const PROMENADE = [
-    [-29.867687,31.047045],[-29.8500,31.0400],[-29.8344,31.0339],[-29.8100,31.03556]
-  ];
+  const PROMENADE_STOPS = ["Point Waterfront","uShaka Marine World","Addington Hospital","Suncoast Casino / North Beach","Blue Lagoon"];
+  const PROMENADE = PROMENADE_STOPS.map(name => {
+    const l = LANDMARKS.find(x => x.name === name);
+    return [l.lat, l.lon];
+  });
 
   // Set this to your deployed Cloudflare Worker address after following the setup guide,
   // e.g. "wss://durban-ais-relay.yourname.workers.dev"
